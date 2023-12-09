@@ -1,4 +1,9 @@
 const express = require("express");
+const multer = require("multer");
+const axios = require('axios');
+const fs = require('fs');
+const FormData = require('form-data');
+
 var router = express.Router();
 const {
   getEntities,
@@ -56,5 +61,105 @@ router.post("/login", async(req, res)=>{
     res.status(500).json({error})
     }
 })
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads"); 
+  },
+  filename: function (req, file, cb) {
+    const uniqueFilename = `${Date.now()}_${file.originalname}`;
+    cb(null, uniqueFilename);
+  },
+});
+
+const upload = multer({ storage: storage}); 
+
+// router.post("/upload", upload.single("file"), async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).send("No file was uploaded.");
+//     }
+//     const data = await lighthouseUpload(`./uploads/${req.file.filename}`)
+//     console.log("data", data)
+
+//     res.json({ path: `/uploads/${req.file.filename}`
+//   });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error });
+//   }
+// });
+
+
+
+
+// const lighthouseUpload = (path) =>{
+
+//   const apiUrl = 'https://node.lighthouse.storage/api/v0/add';
+//   const apiKey = 'ad67a2de.cc73d92b0506495e8db6e7178b087142'; // Replace with your actual API key
+  
+// const fileData = fs.createReadStream(path);
+
+// const formData = new FormData();
+// formData.append('file', fileData);
+
+// axios.post(apiUrl, formData, {
+//   headers: {
+//       'Authorization': `Bearer ${apiKey}`,
+//     'Content-Type': 'multipart/form-data',
+//   },
+// })
+//   .then(response => {
+//     console.log('Response:', response.data);
+//     return response.data
+//   })
+//   .catch(error => {
+//     console.error('Error:', error);
+//   });
+// }
+
+
+const lighthouseUpload = (path) => {
+  const apiUrl = 'https://node.lighthouse.storage/api/v0/add';
+  const apiKey = 'ad67a2de.cc73d92b0506495e8db6e7178b087142'; // Replace with your actual API key
+  const fileData = fs.createReadStream(path);
+
+  const formData = new FormData();
+  formData.append('file', fileData);
+
+  return axios.post(apiUrl, formData, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+    .then(response => {
+      console.log('Response:', response.data);
+      return response.data;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      throw error; // Propagate the error through the Promise chain
+    });
+};
+
+router.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file was uploaded.");
+    }
+
+    const data = await lighthouseUpload(`./uploads/${req.file.filename}`);
+    // console.log("data", data);
+
+    res.json({ path: `/uploads/${req.file.filename}`,
+  uri:`https://gateway.lighthouse.storage/ipfs/${data.Hash}` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message }); // Send error message in response
+  }
+});
+
 
 module.exports = router;
