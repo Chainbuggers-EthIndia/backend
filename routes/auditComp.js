@@ -50,7 +50,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async(req, res)=>{
     try {
      
-         let comp = await getEntitiesById("Audit_company",{_id:req.body.companyId})
+         let comp = await getEntitiesById("Audit_company",{name:req.body.name})
         
         if(!comp.Item){
             return res.status(401).send("Unauthenticated")
