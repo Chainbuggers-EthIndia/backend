@@ -6,11 +6,11 @@ const app = express();
 app.use(express.json());
 
 const auditComp = require("./routes/auditComp")
-// const company = require("./routes/company")
+const company = require("./routes/company")
 app.use(cors());
 
 app.use("/audit",auditComp)
-// app.use("/company",company)
+app.use("/company",company)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

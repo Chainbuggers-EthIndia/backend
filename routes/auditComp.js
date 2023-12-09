@@ -29,7 +29,8 @@ router.post("/register", async (req, res) => {
     _id,
     name: req.body.name,
     walletAdd: req.body.wallet,
-    password: req.body.password
+    password: req.body.password,
+    role:req.body.role
   };
   try {
     const result = await addOrUpdateEntitiy("Audit_company", auditCompData);
@@ -48,7 +49,13 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async(req, res)=>{
     try {
-        const comp = await getEntitiesById("Audit_company",{_id:req.body.companyId})
+        let comp
+        if(req.body.role === "Company"){
+          comp = await getEntitiesById("Company",{_id:req.body.companyId})
+        }
+        else{
+          comp = await getEntitiesById("Audit_company",{_id:req.body.companyId})
+        }
         if(!comp){
             return res.status(401).send("Unauthenticated")
         }
@@ -60,6 +67,16 @@ router.post("/login", async(req, res)=>{
         console.error(error);
     res.status(500).json({error})
     }
+})
+
+router.get("/get/auditors", async(req, res)=>{
+  try {
+    const auditors = await getEntities("Audit_company")
+    res.send({data:auditors.Items})
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({error})
+  }
 })
 
 
@@ -74,50 +91,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage}); 
-
-// router.post("/upload", upload.single("file"), async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).send("No file was uploaded.");
-//     }
-//     const data = await lighthouseUpload(`./uploads/${req.file.filename}`)
-//     console.log("data", data)
-
-//     res.json({ path: `/uploads/${req.file.filename}`
-//   });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error });
-//   }
-// });
-
-
-
-
-// const lighthouseUpload = (path) =>{
-
-//   const apiUrl = 'https://node.lighthouse.storage/api/v0/add';
-//   const apiKey = 'ad67a2de.cc73d92b0506495e8db6e7178b087142'; // Replace with your actual API key
-  
-// const fileData = fs.createReadStream(path);
-
-// const formData = new FormData();
-// formData.append('file', fileData);
-
-// axios.post(apiUrl, formData, {
-//   headers: {
-//       'Authorization': `Bearer ${apiKey}`,
-//     'Content-Type': 'multipart/form-data',
-//   },
-// })
-//   .then(response => {
-//     console.log('Response:', response.data);
-//     return response.data
-//   })
-//   .catch(error => {
-//     console.error('Error:', error);
-//   });
-// }
 
 
 const lighthouseUpload = (path) => {
@@ -140,7 +113,7 @@ const lighthouseUpload = (path) => {
     })
     .catch(error => {
       console.error('Error:', error);
-      throw error; // Propagate the error through the Promise chain
+      throw error; 
     });
 };
 
@@ -157,7 +130,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   uri:`https://gateway.lighthouse.storage/ipfs/${data.Hash}` });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message }); // Send error message in response
+    res.status(500).json({ error: error.message }); 
   }
 });
 
