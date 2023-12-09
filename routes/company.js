@@ -46,5 +46,24 @@ router.post("/register", async(req,res)=>{
   }
 })
 
+router.post("/login", async(req, res)=>{
+  try {
+   
+       let comp = await getEntitiesById("Company",{_id:req.body.companyId})
+      
+      if(!comp.Item){
+          return res.status(401).send("Unauthenticated")
+      }
+      console.log("a,",comp.Item,"---",req.body)
+      if(comp.Item.password !== req.body.password){
+          return res.status(401).send("Unauthenticated")
+      }
+      res.send({data:comp.Item})
+  } catch (error) {
+      console.error(error);
+  res.status(500).json({error})
+  }
+})
+
 
 module.exports = router;
